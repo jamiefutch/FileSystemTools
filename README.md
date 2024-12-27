@@ -27,8 +27,6 @@ Tool for searching files for a string
 ### Additional OSS Code
 [https://github.com/pdonald/aho-corasick/tree/master](https://github.com/pdonald/aho-corasick/tree/master)
 
-[https://github.com/jpdillingham/Utility.CommandLine.Arguments](https://github.com/jpdillingham/Utility.CommandLine.Arguments)
-
 
 ### License
     MIT License
