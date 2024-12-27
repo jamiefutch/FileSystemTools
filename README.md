@@ -24,7 +24,7 @@ Tool for searching files for a string
 
 
 
-### Attribuitions
+### Attributions
 [https://github.com/pdonald/aho-corasick/tree/master](https://github.com/pdonald/aho-corasick/tree/master)
 
 
