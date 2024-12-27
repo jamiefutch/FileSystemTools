@@ -22,19 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using iFFind.Structs;
 
-namespace iFFind.Helpers
+namespace FstShared
 {
-    static class StringHelpers
+    public static class StringHelpers
     {
-        public static string ToConsoleString(this iFilesStructs.FileResult fileResult)
+        public static string ToConsoleString(this FstStructs.FileResult fileResult)
         {
             StringBuilder s = new StringBuilder();
             //s.AppendLine($"File found: {fileResult.FileName}");
@@ -46,6 +44,17 @@ namespace iFFind.Helpers
             
             //return $"File found: {fileResult.FileName}\n" +
             return s.ToString();
+        }
+
+
+        /// <summary>
+        /// print a line to the console
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static void PrintLine(this string text)
+        {
+            Console.WriteLine(text);
         }
     }
 }

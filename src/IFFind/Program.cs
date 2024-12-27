@@ -22,41 +22,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Globalization;
-using System.IO;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Net.Mime;
 using System.Runtime.InteropServices;
 using System.Text;
 using iFFind;
-using iFFind.Helpers;
-using iFFind.Structs;
-
+using FstShared;
 
 namespace IFFind
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    class Program
+    public static class Program
     {
         #region Locals
-        private static StringBuilder _resultsBuilder = new StringBuilder();
-        private static long _count = 0;
+        private static readonly StringBuilder _resultsBuilder = new StringBuilder();
+        private static long _count;
 
         private static bool _isWindowsOs;
         #endregion
         
         static void Main(string[] args)
         {
-            _isWindowsOs = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            _isWindowsOs = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
             var searchParams = GetParameters(args);
-            Print(iFilesStructs.SearchParametersToString(searchParams));
+            FstStructs.IFFindSearchParametersToString(searchParams).PrintLine();
 
             
             SearchDirectoriesForFile(searchParams.SearchDirectory, searchParams.SearchText);
-            Print($"Count: {_count}");
+            $"Count: {_count}".PrintLine();
             
             if (!string.IsNullOrEmpty(searchParams.OutputFile))
             {
@@ -71,7 +64,6 @@ namespace IFFind
         /// <param name="searchString"></param>
         static void SearchDirectoriesForFile(string rootDirectory, string searchString)
         {
-            var ss = searchString.ToLower();
             try
             {
                 foreach (string directory in Directory.GetDirectories(FixPath(rootDirectory, _isWindowsOs)))
@@ -81,7 +73,6 @@ namespace IFFind
 
                 foreach (string file in Directory.GetFiles(rootDirectory))
                 {
-                    bool SearchComplete = true;
                     var tooLargeToScan = false;
                     var found = false;
                     FileInfo fileInfo = new FileInfo(file);
@@ -101,14 +92,14 @@ namespace IFFind
                     else
                     { tooLargeToScan=true;}
 
-                    if (tooLargeToScan || found == true)
+                    if (tooLargeToScan || found)
                     {
                         _resultsBuilder.Append(SearchFile(file, SearchStringToArray(searchString)));
                     }
                     
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //Console.WriteLine($"An error occurred: {ex.Message}");
             }
@@ -140,14 +131,15 @@ namespace IFFind
                         s.Append("\t");
                         s.Append(FileName);
                         s.Append("\r\n");
-                        Print(s.ToString());
+                        s.ToString().PrintLine();
                     }
                     LineCount++;
                 }
             }
             catch (Exception ex)
             {
-                string msg = ex.Message;
+                // ReSharper disable once UnusedVariable
+                var msg = ex.Message;
             }
             return s;
         }
@@ -158,15 +150,7 @@ namespace IFFind
             return new string[] { searchString };
         }
 
-        /// <summary>
-        /// lazy print routine
-        /// </summary>
-        /// <param name="text"></param>
-        static void Print(string text)
-        {
-            Console.WriteLine(text);
-        }
-
+        
         /// <summary>
         /// Fixes the path if it is missing a trailing backslash
         /// </summary>
@@ -199,9 +183,9 @@ namespace IFFind
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        static iFilesStructs.SearchParameters GetParameters(string[] args)
+        static FstStructs.SearchParameters GetParameters(string[] args)
         {
-            var sp = new iFilesStructs.SearchParameters();
+            var sp = new FstStructs.SearchParameters();
             if (args.Length < 2)
             {
                 PrintUsage();
@@ -243,7 +227,7 @@ namespace IFFind
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 PrintUsage();
                 Environment.Exit(1);
@@ -259,14 +243,14 @@ namespace IFFind
         /// </summary>
         static void PrintUsage()
         {
-            Print("Usage: iFFind <search directory> <search text> [-o <output file>]");
-            Print("\t-f [ <search specific file only>]");
+            "Usage: iFFind <search directory> <search text> [-o <output file>]".PrintLine();
+            "\t-f [ <search specific file only>]".PrintLine();
         }
 
         /// <summary>
         /// Saves the results to a file
         /// </summary>
-        static void SaveResultsToFile(iFilesStructs.SearchParameters parameters)
+        static void SaveResultsToFile(FstStructs.SearchParameters parameters)
         {
             if (!string.IsNullOrEmpty(parameters.OutputFile))
             {
@@ -274,7 +258,7 @@ namespace IFFind
                 {
                     File.Delete(parameters.OutputFile);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //Console.WriteLine($"An error occurred deleting the output file: {ex.Message}");
                 }

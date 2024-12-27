@@ -21,4 +21,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FstShared\FstShared.csproj" />
+  </ItemGroup>
+
 </Project>

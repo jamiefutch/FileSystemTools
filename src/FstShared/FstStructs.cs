@@ -24,16 +24,17 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-// ReSharper disable InconsistentNaming
 #pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
 
-namespace iFind.Structs
+namespace FstShared
 {
     // ReSharper disable once InconsistentNaming
-    internal static class iFilesStructs
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    public static class FstStructs
     {
         public struct FileResult
         {
@@ -62,6 +63,13 @@ namespace iFind.Structs
             public bool SearchFiles;
             public bool SearchDirectories;
             public string OutputFile;
+            public string SpecificFilename;
+        }
+
+        public struct ResultsSet
+        {
+            public string SearchResults { get; set; }
+            public bool Complete { get; set; }
         }
 
         /// <summary>
@@ -69,7 +77,7 @@ namespace iFind.Structs
         /// </summary>
         /// <param name="searchParameters"></param>
         /// <returns></returns>
-        public static string SearchParametersToString(SearchParameters searchParameters)
+        public static string iFindSearchParametersToString(SearchParameters searchParameters)
         {
             StringBuilder s = new StringBuilder();
             s.AppendLine($"Search Text: {searchParameters.SearchText}");
@@ -79,6 +87,20 @@ namespace iFind.Structs
             s.AppendLine($"Search Directories: {searchParameters.SearchDirectories}");
             s.AppendLine($"Output File: {searchParameters.OutputFile}");
 
+            return s.ToString();
+        }
+
+        public static string IFFindSearchParametersToString(SearchParameters searchParameters)
+        {
+            StringBuilder s = new StringBuilder();
+            s.AppendLine($"Search Text: {searchParameters.SearchText}");
+            s.AppendLine($"Search Directory: {searchParameters.SearchDirectory}");
+            s.Append($"Filename To Search: {searchParameters.SpecificFilename}");
+            //s.AppendLine($"Search Both: {searchParameters.SearchBoth}");
+            //s.AppendLine($"Search Files: {searchParameters.SearchFiles}");
+            //s.AppendLine($"Search Directories: {searchParameters.SearchDirectories}");
+            s.AppendLine($"Output File: {searchParameters.OutputFile}");
+            
             return s.ToString();
         }
     }

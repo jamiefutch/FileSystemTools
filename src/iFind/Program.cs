@@ -22,300 +22,200 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Globalization;
-using System.IO;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using iFind.Helpers;
-using iFind.Structs;
-//using Utility.CommandLine.Arguments;
+using FstShared;
 
-namespace iFind
+namespace iFind;
+
+[SuppressMessage("ReSharper", "InconsistentNaming")]
+public static class Program
 {
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    class Program
+    #region Locals
+
+    // ReSharper disable once CollectionNeverQueried.Local
+    // ReSharper disable once NotAccessedField.Local
+    private static List<FstStructs.FileResult>? _fileResults;
+    private static List<string>? _results;
+
+    private static bool _isWindowsOs;
+
+    #endregion
+
+    private static void Main(string[] args)
     {
-        #region Locals
-        private static List<iFilesStructs.FileResult> _fileResults;
-        private static List<string> _results;
-        
-        private static bool _isWindowsOs;
-        #endregion
-        
-        static void Main(string[] args)
+        _isWindowsOs = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+        var parameters = GetParameters(args);
+        FstStructs.iFindSearchParametersToString(parameters);
+        FstStructs.iFindSearchParametersToString(parameters).PrintLine();
+
+        _results = new List<string>();
+
+        _fileResults = new List<FstStructs.FileResult>();
+        SearchDirectoriesForFile(parameters);
+        if (!string.IsNullOrEmpty(parameters.OutputFile)) SaveResultsToFile(parameters);
+    }
+
+
+    private static void SearchDirectoriesForFile(FstStructs.SearchParameters parameters)
+    {
+        var ss = parameters.SearchText.ToLower();
+        var directoriesToSearch = new Stack<string>();
+        directoriesToSearch.Push(FixPath(parameters.SearchDirectory, _isWindowsOs));
+        var count = 0;
+
+        try
         {
-            _isWindowsOs = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-
-            var parameters = GetParameters(args);
-            iFilesStructs.SearchParametersToString(parameters);
-            Print(iFilesStructs.SearchParametersToString(parameters));
-            
-            _results = new List<string>();
-            
-            _fileResults = new List<iFilesStructs.FileResult>();
-            SearchDirectoriesForFile(parameters);
-            if (!string.IsNullOrEmpty(parameters.OutputFile))
+            while (directoriesToSearch.Count > 0)
             {
-                SaveResultsToFile(parameters);
-            }
-        }
+                var currentDirectory = directoriesToSearch.Pop();
 
-
-
-        static void SearchDirectoriesForFile(iFilesStructs.SearchParameters parameters)
-        {
-            var ss = parameters.SearchText.ToLower();
-            var directoriesToSearch = new Stack<string>();
-            directoriesToSearch.Push(FixPath(parameters.SearchDirectory, _isWindowsOs));
-            var count = 0;
-
-            try
-            {
-                while (directoriesToSearch.Count > 0)
+                foreach (var directory in Directory.GetDirectories(currentDirectory))
                 {
-                    string currentDirectory = directoriesToSearch.Pop();
-
-                    foreach (string directory in Directory.GetDirectories(currentDirectory))
-                    {
-                        if (parameters.SearchBoth || parameters.SearchDirectories)
+                    if (parameters.SearchBoth || parameters.SearchDirectories)
+                        if (directory.ToLower().Contains(ss))
                         {
-                            if (directory.ToLower().Contains(ss))
-                            {
-                                FileInfo fi = new FileInfo(directory);
-                                _results.Add(fi.FullName);
-                                Console.WriteLine(fi.FullName);
-                                count++;
-                            }
+                            var fi = new FileInfo(directory);
+                            _results?.Add(fi.FullName);
+                            Console.WriteLine(fi.FullName);
+                            count++;
                         }
-                        directoriesToSearch.Push(directory);
-                    }
 
-                    foreach (string file in Directory.GetFiles(currentDirectory))
-                    {
-                        if (parameters.SearchBoth || parameters.SearchFiles)
+                    directoriesToSearch.Push(directory);
+                }
+
+                foreach (var file in Directory.GetFiles(currentDirectory))
+                    if (parameters.SearchBoth || parameters.SearchFiles)
+                        if (file.ToLower().Contains(ss))
                         {
-                            if (file.ToLower().Contains(ss))
-                            {
-                                FileInfo fi = new FileInfo(file);
-                                _results.Add(fi.FullName);
-                                Console.WriteLine(fi.FullName);
-                                count++;
-                            }
+                            var fi = new FileInfo(file);
+                            _results?.Add(fi.FullName);
+                            Console.WriteLine(fi.FullName);
+                            count++;
                         }
-                    }
-                }
             }
-            catch (Exception ex)
-            {
-                //Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-            
-            Print($"Count: {count}");
         }
-
-        /// <summary>
-        /// Adds a directory or file to the list of results
-        /// </summary>
-        /// <param name="directoryInfo"></param>
-        /// <param name="fileInfo"></param>
-        static iFilesStructs.FileResult AddItemToList(DirectoryInfo? directoryInfo, FileInfo? fileInfo)
+        catch (Exception)
         {
-            iFilesStructs.FileResult fr;
-            if(directoryInfo != null)
-            {
-                // directory
-                fr = new iFilesStructs.FileResult
-                {
-                    FileName = directoryInfo.Name,
-                    FilePath = directoryInfo.FullName,
-                    FileExtension = "",
-                    FileSize = "0",
-                    FileCreationDate = directoryInfo.CreationTime.ToString(CultureInfo.InvariantCulture),
-                    FileLastAccessDate = directoryInfo.LastAccessTime.ToString(CultureInfo.InvariantCulture),
-                    FileLastWriteDate = directoryInfo.LastWriteTime.ToString(CultureInfo.InvariantCulture)
-                };
-                _fileResults.Add(fr);
-            }
-            else if(fileInfo != null)
-            {
-                // file
-                fr = new iFilesStructs.FileResult
-                {
-                    FileName = fileInfo.Name,
-                    FilePath = fileInfo.FullName,
-                    FileExtension = fileInfo.Extension,
-                    FileSize = fileInfo.Length.ToString(),
-                    FileCreationDate = fileInfo.CreationTime.ToString(CultureInfo.InvariantCulture),
-                    FileLastAccessDate = fileInfo.LastAccessTime.ToString(CultureInfo.InvariantCulture),
-                    FileLastWriteDate = fileInfo.LastWriteTime.ToString(CultureInfo.InvariantCulture)
-                };
-                _fileResults.Add(fr);
-            }
-            else
-            {
-                // lazy catchall
-                fr = new iFilesStructs.FileResult();
-            }
-            
-            return fr;
+            //Console.WriteLine($"An error occurred: {ex.Message}");
         }
 
-        /// <summary>
-        /// lazy print routine
-        /// </summary>
-        /// <param name="text"></param>
-        static void Print(string text)
+        $"Count: {count}".PrintLine();
+    }
+    
+
+    /// <summary>
+    ///     Fixes the path if it is missing a trailing backslash
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="isWindowsOs"></param>
+    /// <returns></returns>
+    private static string FixPath(string path, bool isWindowsOs)
+    {
+        var ret = path;
+
+        if (!isWindowsOs)
         {
-            Console.WriteLine(text);
+            if (path.EndsWith(":")) ret = path + "\\";
         }
-
-        /// <summary>
-        /// Fixes the path if it is missing a trailing backslash
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="isWindowsOs"></param>
-        /// <returns></returns>
-        static string FixPath(string path, bool isWindowsOs)
+        else
         {
-            var ret = path;
-
-            if(!isWindowsOs)
-            {
-                if (path.EndsWith(":"))
-                {
-                    ret = path + "\\";
-                }
-            }
-            else
-            {
-                if (path.EndsWith(":"))
-                {
-                    ret = path + "/";
-                }
-            }
-            return ret;
+            if (path.EndsWith(":")) ret = path + "/";
         }
 
-        /// <summary>
-        /// parses the command line arguments
-        /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        static iFilesStructs.SearchParameters GetParameters(string[] args)
+        return ret;
+    }
+
+    /// <summary>
+    ///     parses the command line arguments
+    /// </summary>
+    /// <param name="args"></param>
+    /// <returns></returns>
+    private static FstStructs.SearchParameters GetParameters(string[] args)
+    {
+        var sp = new FstStructs.SearchParameters();
+        if (args.Length < 2)
         {
-            var sp = new iFilesStructs.SearchParameters();
-            if (args.Length < 2)
-            {
-                PrintUsage();
-                Environment.Exit(1);
-            }
-
-            try
-            {
-                sp.SearchDirectory = args[0];
-                sp.SearchText = args[1];
-
-                if(args.Length > 2)
-                {
-                    if (args[2].ToLower() == "-o")
-                    {
-                        if (args.Length > 3)
-                        {
-                            sp.OutputFile = args[3];
-                        }
-                    }
-
-                    if (args[2].ToLower() == "-b")
-                    {
-                        sp.SearchBoth = true;
-                    }
-                
-                    if (args[2].ToLower() == "-d")
-                    {
-                        sp.SearchDirectories = true;
-                    }
-
-                    if (args[2].ToLower() == "-f")
-                    {
-                        sp.SearchFiles = true;
-                    }
-
-                    if (args.Length > 4)
-                    {
-                        if (args[4].ToLower() == "-o")
-                        {
-                            if (args.Length > 5)
-                            {
-                                sp.OutputFile = args[5];
-                            }
-                        }
-                    }
-                }
-
-                sp = FixParameters(sp);
-            }
-            catch (Exception e)
-            {
-                PrintUsage();
-                Environment.Exit(1);
-
-            }
-
-            return sp;
+            PrintUsage();
+            Environment.Exit(1);
         }
 
-        /// <summary>
-        /// Fixes the search parameters for search both parameter
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        static iFilesStructs.SearchParameters FixParameters(iFilesStructs.SearchParameters parameters)
+        try
         {
-            var sp = parameters;
-            if (!parameters.SearchDirectories && !parameters.SearchFiles)
+            sp.SearchDirectory = args[0];
+            sp.SearchText = args[1];
+
+            if (args.Length > 2)
             {
-                sp.SearchBoth = true;
+                if (args[2].ToLower() == "-o")
+                    if (args.Length > 3)
+                        sp.OutputFile = args[3];
+
+                if (args[2].ToLower() == "-b") sp.SearchBoth = true;
+
+                if (args[2].ToLower() == "-d") sp.SearchDirectories = true;
+
+                if (args[2].ToLower() == "-f") sp.SearchFiles = true;
+
+                if (args.Length > 4)
+                    if (args[4].ToLower() == "-o")
+                        if (args.Length > 5)
+                            sp.OutputFile = args[5];
             }
-            
-            return sp;
+
+            sp = FixParameters(sp);
         }
-        /// <summary>
-        /// Displays the usage information
-        /// </summary>
-        static void PrintUsage()
+        catch (Exception)
         {
-            Print("Usage: iFind <search directory> <search text> [-o <output file>]");
-            Print("\t-b [ <search both filenames and directory names {default}>]");
-            Print("\t-d [ <search directory names only>]");
-            Print("\t-f [ <search filenames only>]");
+            PrintUsage();
+            Environment.Exit(1);
         }
 
-        /// <summary>
-        /// Saves the results to a file
-        /// </summary>
-        static void SaveResultsToFile(iFilesStructs.SearchParameters parameters)
+        return sp;
+    }
+
+    /// <summary>
+    ///     Fixes the search parameters for search both parameter
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <returns></returns>
+    private static FstStructs.SearchParameters FixParameters(FstStructs.SearchParameters parameters)
+    {
+        var sp = parameters;
+        if (parameters is { SearchDirectories: false, SearchFiles: false }) sp.SearchBoth = true;
+
+        return sp;
+    }
+
+    /// <summary>
+    ///     Displays the usage information
+    /// </summary>
+    private static void PrintUsage()
+    {
+        "Usage: iFind <search directory> <search text> [-o <output file>]".PrintLine();
+        "\t-b [ <search both filenames and directory names {default}>]".PrintLine();
+        "\t-d [ <search directory names only>]".PrintLine();
+        "\t-f [ <search filenames only>]".PrintLine();
+    }
+
+    /// <summary>
+    ///     Saves the results to a file
+    /// </summary>
+    private static void SaveResultsToFile(FstStructs.SearchParameters parameters)
+    {
+        if (string.IsNullOrEmpty(parameters.OutputFile)) return;
+        try
         {
-            if (!string.IsNullOrEmpty(parameters.OutputFile))
-            {
-                try
-                {
-                    File.Delete(parameters.OutputFile);
-                }
-                catch (Exception ex)
-                {
-                    //Console.WriteLine($"An error occurred deleting the output file: {ex.Message}");
-                }
-
-                using StreamWriter sw = new StreamWriter(parameters.OutputFile);
-                foreach (string result in _results)
-                {
-                    sw.WriteLine(result);
-                }
-            }
+            File.Delete(parameters.OutputFile);
+        }
+        catch (Exception)
+        {
+            //Console.WriteLine($"An error occurred deleting the output file: {ex.Message}");
         }
 
+        using var sw = new StreamWriter(parameters.OutputFile);
+        if (_results == null) return;
+        foreach (var result in _results) sw.WriteLine(result);
     }
 }

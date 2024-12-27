@@ -14,4 +14,13 @@
 	  
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FstShared\FstShared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Helpers\" />
+    <Folder Include="Structs\" />
+  </ItemGroup>
+
 </Project>
