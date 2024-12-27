@@ -17,7 +17,7 @@ Tool for searching directories for files or directories with a given name
 Tool for searching files for a string
 
 #### Usage
-    ifind.exe [directory path] [search string] 
+    iffind.exe [directory path] [search string] 
         Options:
             -f search specific file only
             -o [output file path] saves output to a file
