@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+	  <SelfContained>true</SelfContained>
+	  <PublishSingleFile>true</PublishSingleFile>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <BaseOutputPath>../outputs</BaseOutputPath>
+    <StartupObject>iFind.Program</StartupObject>
+    <PackageOutputPath>..\outputs</PackageOutputPath>
+    <AssemblyName>ifind</AssemblyName>
+	  
+  </PropertyGroup>
+
+</Project>
